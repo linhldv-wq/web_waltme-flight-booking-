@@ -1,0 +1,15 @@
+{
+  "name": "skybook-ecommerce",
+  "version": "1.0.0",
+  "description": "Website đặt vé máy bay thương mại tích hợp Duffel API",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^4.19.2",
+    "node-fetch": "^2.7.0",
+    "stripe": "^23.0.0"
+  }
+}

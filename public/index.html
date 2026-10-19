@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SkyBook - Hệ thống đặt vé máy bay trực tuyến</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Inter', sans-serif; background: #f5f7fb; color: #1a1a2e; }
+        .header {
+            background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 100%);
+            color: white; padding: 18px 0; position: sticky; top: 0; z-index: 100;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        }
+        .header .container { display: flex; justify-content: space-between; align-items: center; max-width: 1280px; margin: 0 auto; padding: 0 24px; }
+        .logo { font-size: 1.6rem; font-weight: 800; letter-spacing: -0.5px; }
+        .logo span { color: #60a5fa; }
+        .hero {
+            background: linear-gradient(rgba(15,23,42,0.7), rgba(15,23,42,0.7)), url('https://images.unsplash.com/photo-1436491865332-7a61a109cc05?w=1600') center/cover;
+            padding: 80px 20px 60px; color: white; text-align: center;
+        }
+        .hero h1 { font-size: 2.6rem; font-weight: 800; margin-bottom: 12px; }
+        .hero p { font-size: 1.15rem; opacity: 0.9; }
+        .container { max-width: 1280px; margin: 0 auto; padding: 0 24px; }
+        .search-card {
+            background: white; border-radius: 20px; padding: 28px; margin-top: -60px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.12); position: relative; z-index: 10;
+        }
+        .trip-type { display: flex; gap: 24px; margin-bottom: 20px; font-weight: 500; cursor: pointer; }
+        .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; }
+        .form-group label { display: block; margin-bottom: 6px; font-size: 14px; font-weight: 600; color: #374151; }
+        .form-group input, .form-group select {
+            width: 100%; padding: 12px 14px; border: 1.5px solid #e5e7eb; border-radius: 10px; font-size: 15px;
+            transition: all 0.2s;
+        }
+        .form-group input:focus, .form-group select:focus { outline: none; border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59,130,246,0.1); }
+        .search-btn {
+            background: linear-gradient(135deg, #3b82f6, #1d4ed8); color: white; border: none;
+            padding: 14px 36px; border-radius: 12px; font-size: 16px; font-weight: 600; cursor: pointer;
+            margin-top: 20px; width: 100%; transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .search-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(59,130,246,0.3); }
+        .results-section { margin: 40px 0 60px; }
+        .flight-card {
+            background: white; border-radius: 16px; padding: 20px; margin-bottom: 16px;
+            display: grid; grid-template-columns: 1.2fr 2fr 1fr; gap: 20px; align-items: center;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.06); transition: all 0.2s;
+        }
+        .flight-card:hover { transform: translateY(-2px); box-shadow: 0 12px 25px rgba(0,0,0,0.1); }
+        .airline-name { font-weight: 700; font-size: 1.1rem; color: #0f172a; }
+        .flight-time { font-size: 1.2rem; font-weight: 700; }
+        .duration { color: #6b7280; font-size: 14px; margin-top: 4px; }
+        .price { font-size: 1.5rem; font-weight: 800; color: #1d4ed8; text-align: right; }
+        .book-btn { background: #10b981; color: white; border: none; padding: 10px 20px; border-radius: 10px; cursor: pointer; font-weight: 600; width: 100%; margin-top: 8px; }
+        .book-btn:hover { background: #059669; }
+        .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 1000; align-items: center; justify-content: center; overflow-y: auto; padding: 20px; }
+        .modal.active { display: flex; }
+        .modal-content { background: white; border-radius: 20px; padding: 32px; width: 100%; max-width: 600px; }
+        .no-result { text-align: center; padding: 60px 20px; color: #6b7280; }
+        @media (max-width: 768px) {
+            .flight-card { grid-template-columns: 1fr; text-align: center; }
+            .price { text-align: center; }
+            .hero h1 { font-size: 2rem; }
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="container">
+            <div class="logo">Sky<span>Book</span></div>
+            <div>Nền tảng đặt vé toàn cầu</div>
+        </div>
+    </header>
+
+    <section class="hero">
+        <h1>Khám phá thế giới với giá tốt nhất</h1>
+        <p>Hệ thống kết nối trực tiếp hàng trăm hãng hàng không</p>
+    </section>
+
+    <div class="container">
+        <div class="search-card">
+            <div class="trip-type">
+                <label><input type="radio" name="trip" value="round" checked> Khứ hồi</label>
+                <label><input type="radio" name="trip" value="oneway"> Một chiều</label>
+            </div>
+            <div class="form-grid">
+                <div class="form-group">
+                    <label>Điểm đi (IATA)</label>
+                    <input type="text" id="from" value="HAN" placeholder="Ví dụ: HAN, SGN">
+                </div>
+                <div class="form-group">
+                    <label>Điểm đến (IATA)</label>
+                    <input type="text" id="to" value="SGN" placeholder="Ví dụ: SGN, SIN">
+                </div>
+                <div class="form-group">
+                    <label>Ngày đi</label>
+                    <input type="date" id="depart">
+                </div>
+                <div class="form-group" id="returnGroup">
+                    <label>Ngày về</label>
+                    <input type="date" id="return">
+                </div>
+                <div class="form-group">
+                    <label>Hành khách</label>
+                    <select id="passengers">
+                        <option value="1">1 người lớn</option>
+                        <option value="2">2 người lớn</option>
+                        <option value="3">3 người lớn</option>
+                    </select>
+                </div>
+            </div>
+            <button class="search-btn" onclick="searchFlights()">Tìm chuyến bay</button>
+        </div>
+
+        <div class="results-section" id="results"></div>
+    </div>
+
+    <!-- Modal điền thông tin đặt vé -->
+    <div class="modal" id="bookingModal">
+        <div class="modal-content">
+            <h2 style="margin-bottom: 16px;">Xác thực thông tin hành khách</h2>
+            <div id="passengerFormsContainer"></div>
+            <button class="search-btn" onclick="confirmBooking()">Thanh toán qua Stripe & Xuất vé</button>
+            <button onclick="closeModal()" style="width: 100%; margin-top: 10px; padding: 12px; border: none; background: #f3f4f6; border-radius: 10px; cursor: pointer; font-weight:600;">Hủy bỏ</button>
+        </div>
+    </div>
+
+    <script>
+        // Thiết lập ngày mặc định
+        const tomorrow = new Date();
+        tomorrow.setDate(tomorrow.getDate() + 2);
+        document.getElementById('depart').valueAsDate = tomorrow;
+        const returnDate = new Date(tomorrow);
+        returnDate.setDate(returnDate.getDate() + 5);
+        document.getElementById('return').valueAsDate = returnDate;
+
+        document.querySelectorAll('input[name="trip"]').forEach(radio => {
+            radio.addEventListener('change', (e) => {
+                document.getElementById('returnGroup').style.display = e.target.value === 'oneway' ? 'none' : 'block';
+            });
+        });
+
+        let currentOffers = [];
+        let selectedOffer = null;
+
+        async function searchFlights() {
+            const from = document.getElementById('from').value.trim().toUpperCase();
+            const to = document.getElementById('to').value.trim().toUpperCase();
+            const departDate = document.getElementById('depart').value;
+            const tripType = document.querySelector('input[name="trip"]:checked').value;
+            const returnDate = document.getElementById('return').value;
+            const passengers = document.getElementById('passengers').value;
+
+            if (!from || !to || !departDate) {
+                alert("Vui lòng nhập đầy đủ thông tin điểm đi, điểm đến và ngày đi!");
+                return;
+            }
+
+            const resultsDiv = document.getElementById('results');
+            resultsDiv.innerHTML = '<div style="text-align:center; padding:40px; font-weight:600; color:#4b5563;">Đang truy vấn hệ thống Duffel API...</div>';
+
+            try {
+                const response = await fetch('/api/search-flights', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ from, to, departDate, returnDate, tripType, passengers })
+                });
+
+                const data = await response.json();
+                if (data.error) {
+                    resultsDiv.innerHTML = `<div class="no-result" style="color:red;">Lỗi từ Duffel: ${data.error}</div>`;
+                    return;
+                }
+
+                currentOffers = data.data || [];
+
+                if (currentOffers.length === 0) {
+                    resultsDiv.innerHTML = '<div class="no-result">Không tìm thấy chuyến bay phù hợp cho tuyến này.</div>';
+                    return;
+                }
+
+                let html = `<h2 style="margin-bottom:20px;">Tìm thấy ${currentOffers.length} chuyến bay</h2>`;
+                currentOffers.forEach((offer) => {
+                    const airline = offer.owner.name;
+                    const totalPrice = parseFloat(offer.total_amount).toLocaleString('vi-VN');
+                    const currency = offer.total_currency;
+                    const slice = offer.slices[0];
+                    const duration = slice.duration;
+
+                    html += `
+                        <div class="flight-card">
+                            <div>
+                                <div class="airline-name">${airline}</div>
+                                <div style="color:#6b7280; font-size:14px; margin-top:4px;">Hạng phổ thông</div>
+                            </div>
+                            <div>
+                                <div class="flight-time">${slice.origin.iata_code} → ${slice.destination.iata_code}</div>
+                                <div class="duration">Thời lượng: ${duration} • ${slice.segments.length - 1 === 0 ? 'Bay thẳng' : slice.segments.length - 1 + ' điểm dừng'}</div>
+                            </div>
+                            <div style="text-align:right;">
+                                <div class="price">${totalPrice} ${currency}</div>
+                                <button class="book-btn" onclick="openBookingModal('${offer.id}')">Chọn vé</button>
+                            </div>
+                        </div>
+                    `;
+                });
+                resultsDiv.innerHTML = html;
+
+            } catch (err) {
+                console.error(err);
+                resultsDiv.innerHTML = '<div class="no-result" style="color:red;">Không thể kết nối đến server backend.</div>';
+            }
+        }
+
+        function openBookingModal(offerId) {
+            selectedOffer = currentOffers.find(o => o.id === offerId);
+            const numPax = parseInt(document.getElementById('passengers').value);
+            const container = document.getElementById('passengerFormsContainer');
+            
+            let formHtml = '';
+            for (let i = 0; i < numPax; i++) {
+                formHtml += `
+                    <div style="border: 1px solid #e5e7eb; padding: 16px; border-radius: 12px; margin-bottom: 12px;">
+                        <h4 style="margin-bottom: 10px; color: #1e3a8a;">Hành khách ${i + 1}</h4>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 8px;">
+                            <div>
+                                <label style="font-size:13px; font-weight:600;">Họ (Ví dụ: NGUYEN)</label>
+                                <input type="text" id="pax_family_name_${i}" style="width:100%; padding:8px; border:1px solid #ccc; border-radius:6px;" required>
+                            </div>
+                            <div>
+                                <label style="font-size:13px; font-weight:600;">Tên đệm & Tên (VD: VAN A)</label>
+                                <input type="text" id="pax_given_name_${i}" style="width:100%; padding:8px; border:1px solid #ccc; border-radius:6px;" required>
+                            </div>
+                        </div>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                            <div>
+                                <label style="font-size:13px; font-weight:600;">Email</label>
+                                <input type="email" id="pax_email_${i}" style="width:100%; padding:8px; border:1px solid #ccc; border-radius:6px;" value="test@example.com">
+                            </div>
+                            <div>
+                                <label style="font-size:13px; font-weight:600;">Số điện thoại</label>
+                                <input type="text" id="pax_phone_${i}" style="width:100%; padding:8px; border:1px solid #ccc; border-radius:6px;" value="+84901234567">
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+            container.innerHTML = formHtml;
+            document.getElementById('bookingModal').classList.add('active');
+        }
+
+        function closeModal() {
+            document.getElementById('bookingModal').classList.remove('active');
+        }
+
+        async function confirmBooking() {
+            const numPax = parseInt(document.getElementById('passengers').value);
+            const passengersData = [];
+
+            for (let i = 0; i < numPax; i++) {
+                const familyName = document.getElementById(`pax_family_name_${i}`).value.trim();
+                const givenName = document.getElementById(`pax_given_name_${i}`).value.trim();
+                const email = document.getElementById(`pax_email_${i}`).value.trim();
+                const phone = document.getElementById(`pax_phone_${i}`).value.trim();
+
+                if (!familyName || !givenName) {
+                    alert(`Vui lòng điền đầy đủ họ tên cho Hành khách ${i + 1}`);
+                    return;
+                }
+
+                passengersData.push({
+                    id: selectedOffer.passengers[i].id,
+                    type: "adult",
+                    title: "mr",
+                    family_name: familyName,
+                    given_name: givenName,
+                    born_on: "1990-01-01",
+                    gender: "m",
+                    email: email,
+                    phone_number: phone
+                });
+            }
+
+            alert("Đang chuyển hướng sang cổng thanh toán bảo mật Stripe...");
+
+            try {
+                const res = await fetch('/api/create-checkout-session', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        offer: selectedOffer,
+                        passengers: passengersData
+                    })
+                });
+
+                const data = await res.json();
+                if (data.url) {
+                    window.location.href = data.url;
+                } else {
+                    alert("Lỗi tạo phiên thanh toán: " + data.error);
+                }
+            } catch (e) {
+                console.error(e);
+                alert("Lỗi kết nối tới hệ thống thanh toán.");
+            }
+        }
+    </script>
+</body>
+</html>
