@@ -2,7 +2,7 @@ const express = require('express');
 const fetch = require('node-fetch');
 const cors = require('cors');
 const path = require('path');
-const stripe = require('stripe')('sk_test_51USDXL5NyRkEUITNcybTXdM7rs4pZacSIr7mFJoyeeYivoJyWWv7zXD78QHmWo1z5I0vrZTbQgTchvUaQ23QA2jf00MF27rW4k'); // Thay bằng Secret Key của Stripe
+const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY || 'sk_test_51USDXL5NyRkEUITNcybTXdM7rs4pZacSIr7mFJoyeeYivoJyWWv7zXD78QHmWo1z5I0vrZTbQgTchvUaQ23QA2jf00MF27rW4k');
 
 const app = express();
 app.use(express.json());
@@ -50,33 +50,33 @@ app.post('/api/search-flights', async (req, res) => {
     }
 });
 
-// 2. API Tạo phiên thanh toán Stripe và lưu tạm thông tin vé
+// 2. API Tạo phiên thanh toán Stripe Checkout (Đã cập nhật chuẩn automatic_payment_methods)
 app.post('/api/create-checkout-session', async (req, res) => {
     const { offer, passengers } = req.body;
     try {
         const amount = Math.round(parseFloat(offer.total_amount));
         const currency = offer.total_currency.toLowerCase();
 
-        // Tạo Stripe Checkout Session
+        // Tạo Stripe Checkout Session với phương thức thanh toán mới
         const session = await stripe.checkout.sessions.create({
-            payment_method_types: ['card'],
+            automatic_payment_methods: { enabled: true },
             line_items: [{
                 price_data: {
                     currency: currency,
                     product_data: {
                         name: `Vé máy bay: ${offer.slices[0].origin.iata_code} → ${offer.slices[0].destination.iata_code}`,
-                        description: `Hãng: ${offer.owner.name} - Số lượng hành khách: ${passengers.length}`
+                        description: `Hãng: ${offer.owner.name} - Số lượng hành khách: ${passengers ? passengers.length : 1}`
                     },
                     unit_amount: amount,
                 },
                 quantity: 1,
             }],
             mode: 'payment',
-            success_url: `http://localhost:3000/success.html?session_id={CHECKOUT_SESSION_ID}`,
-            cancel_url: `http://localhost:3000/index.html`,
+            success_url: `${req.protocol}://${req.get('host')}/success.html?session_id={CHECKOUT_SESSION_ID}`,
+            cancel_url: `${req.protocol}://${req.get('host')}/index.html`,
             metadata: {
                 offerId: offer.id,
-                passengersData: JSON.stringify(passengers)
+                passengersData: JSON.stringify(passengers || [])
             }
         });
 
